@@ -1,0 +1,16 @@
+{
+  "name": "linaria-swc",
+  "version": "1.0.0",
+  "main": "lib/index.js",
+  "license": "MIT",
+  "scripts": {
+    "build": "tsc",
+    "build-example": "tsc && cd example-project && yarn build"
+  },
+  "dependencies": {
+    "@swc/core": "^1.2.51"
+  },
+  "devDependencies": {
+    "typescript": "^4.2.3"
+  }
+}
