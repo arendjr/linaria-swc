@@ -1,5 +1,6 @@
 import type {
   Expression,
+  ImportSpecifier,
   ModuleItem,
   Program,
   TaggedTemplateExpression,
@@ -26,24 +27,23 @@ class LinariaProcessor extends Visitor {
 
   visitModuleItems(items: ModuleItem[]): ModuleItem[] {
     return super.visitModuleItems(
+      // Heads-up: This `filter()` has side-effects!
       items.filter((item) => {
         if (item.type === "ImportDeclaration") {
           // Strip all imports to Linaria:
           if (item.source.value.startsWith("@linaria/")) {
             if (item.source.value === "@linaria/core") {
+              // Store the name of the `css` import.
               const cssImport = item.specifiers.find(
-                (specifier) =>
-                  specifier.type === "ImportSpecifier" &&
-                  specifier.imported?.value === "css"
+                (specifier) => getImportedIdentifierName(specifier) === "css"
               );
               if (cssImport) {
                 this.cssImportName = cssImport.local.value;
               }
             } else if (item.source.value === "@linaria/react") {
+              // Store the name of the `styled` import.
               const styledImport = item.specifiers.find(
-                (specifier) =>
-                  specifier.type === "ImportSpecifier" &&
-                  specifier.imported?.value === "styled"
+                (specifier) => getImportedIdentifierName(specifier) === "styled"
               );
               if (styledImport) {
                 this.styledImportName = styledImport.local.value;
@@ -73,14 +73,22 @@ class LinariaProcessor extends Visitor {
       };
     }
 
-    if (!expression.expressions) {
-      throw new Error(
-        "Template expression is missing expressions: " +
-          JSON.stringify(expression, null, 2)
-      );
-    }
-
     return super.visitTaggedTemplateExpression(expression);
+  }
+}
+
+function getImportedIdentifierName(specifier: ImportSpecifier): string {
+  switch (specifier.type) {
+    case "ImportSpecifier":
+      if (specifier.imported === null) {
+        return specifier.local.value;
+      } else {
+        return specifier.imported.value;
+      }
+    case "ImportDefaultSpecifier":
+      return "default";
+    case "ImportNamespaceSpecifier":
+      return "*";
   }
 }
 
